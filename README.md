@@ -1,0 +1,1 @@
+Config file tested with openocd 0.6.1. 
