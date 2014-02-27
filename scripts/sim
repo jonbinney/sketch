@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import time, thread
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.animation as animation
@@ -33,34 +34,67 @@ class SketchState:
         return np.array((self.fx(self.l1, self.l2), self.fy(self.l1, self.l2)))
 
 class SketchSim:
-    def __init__(self, board_height=1.0):
-        self.state = SketchState()
+    def __init__(self, state, board_height=1.0, dt=0.1, realtime_factor=1.0):
+        self.state = state
         self.board_height = board_height
+        self.path = []
+
+        self.t = 0.0
+        self.dt = dt
+
         self.fig = fig = plt.figure()
         self.ax = fig.add_subplot(111)
         self.ax.set_xlim(0.0, self.state.D)
         self.ax.set_ylim(-self.board_height, 0.0)
 
         # Initialize plot objects
-        self.left_line, = self.ax.plot([], [])
-        self.right_line, = self.ax.plot([], [])
+        self.left_line, = self.ax.plot([], [], 'black', lw=1)
+        self.right_line, = self.ax.plot([], [], 'black', lw=1)
+        self.path_line, = self.ax.plot([], [], 'b-', lw=3)
 
         # Create animation
-        self.ani = animation.FuncAnimation(self.fig, self.step, interval=100, blit=False)
+        self.ani = animation.FuncAnimation(self.fig, self.step, interval=1000*dt, blit=False)
 
     def step(self, step_i):
+        # Update simulated state
+        self.state.l1 = 1.2 + 0.17*np.cos(1.37*self.t)
+        self.state.l2 = 1.2 + 0.15*np.sin(self.t)
+        self.t += self.dt
+
+        # Compute car position
         x, y = self.state.compute_car_position()
+
+        # Draw on the board
+        self.path.append(np.array((x, y)))
+
+        # Update plot
         D = self.state.D
         print x, y, D
         self.left_line.set_data([0., x], [0., y])
         self.right_line.set_data([x, D], [y, 0.])
+        self.path_line.set_data([p[0] for p in self.path], [p[1] for p in self.path])
         return self.left_line, self.right_line
 
     def run(self):
         # We use matplotlib's event loop
         plt.show()
 
+def controller_thread(state, path_desired, goal_tolerance):
+    goal_i = 0
+    while True:
+        if goal_i > len(path_desired):
+            print 'Done!'
+            break
+
+        goal_point = np.array(path_desired[goal_i])
+
 
 if __name__ == '__main__':
-    sim = SketchSim()
+    goal_tolerance = 0.01
+    path_desired = np.array([
+        (0.5, -0.5), (0.7, -0.5), (0.7, -0.7), (0.5, -0.7)]
+
+    self.state = SketchState()
+    thread.start_new_thread(controller_thread, (state, path_desired, goal_tolerance))
+    sim = SketchSim(state)
     sim.run()
