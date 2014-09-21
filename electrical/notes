@@ -1,0 +1,15 @@
+#############################################################
+# Motor Driver
+#############################################################
+
+
+For each of the two motors, the following color scheme is used for wiring:
+  Purple: ENABLE (MXD2)
+  Orange: IN1
+  Grey: IN2
+
+In addition, there is an enable pin for the entire motor driver, which is brown.
+
+To control a motor, hold the board enable pin high, turn on one of the IN pins
+to determine the direction, and then apply a PWM to that motor's enable pin.
+
